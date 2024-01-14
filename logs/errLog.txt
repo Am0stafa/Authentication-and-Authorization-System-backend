@@ -1,0 +1,3 @@
+20240109	03:08:20	52d37aa4-c3d3-48de-a097-dd3c9addccbf	Error: ENOENT: no such file or directory, open 'uploads/profileImg-1704762500891.jpeg'
+20240114	03:19:19	fb9e9e4c-bbbd-455b-ac0e-948f256a1e96	TypeError: Invalid value "undefined" for header "Access-Control-Allow-Origin"
+20240114	03:19:19	33ad2d96-370b-44b5-90ba-4b80d6f20a27	TypeError: Invalid value "undefined" for header "Access-Control-Allow-Origin"
