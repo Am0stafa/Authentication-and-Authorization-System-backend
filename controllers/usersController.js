@@ -2,6 +2,8 @@ const User = require("../model/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const validator = require("validator");
+const bcrypt = require('bcrypt');
+const sendEmail = require("../config/sendEmail");
 
 const getAllUsers = async (req, res) => {
   const users = await User.find();
@@ -102,13 +104,14 @@ const changeUserRole = async (req, res) => {
 };
 
 const updateUserDetails = async (req, res) => {
+  console.log("updateUserDetails");
   const accessToken = req.headers.authorization.split(" ")[1];
 
   if (!accessToken) {
     return res.status(401).json({ message: "Access token is required" });
   }
 
-  const { name, pwd } = req.body;
+  const { name } = req.body;
 
   try {
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
@@ -119,49 +122,27 @@ const updateUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    let isUpdated = false;
 
-    // Update name
+    // Update name if provided and different from the current one
     if (name && name !== user.name) {
       user.name = name;
-    }
-
-    // Update password
-    if (pwd) {
-      const salt = process.env.SALT;
-      const peppers = ["00", "01", "10", "11"];
-      const currentHashedPwd = peppers.find((pep) => {
-        return (
-          crypto
-            .createHash("sha512")
-            .update(salt + pwd + pep)
-            .digest("hex") === user.password
-        );
-      });
-
-      if (currentHashedPwd) {
-        return res
-          .status(400)
-          .json({
-            message: "New password must be different from the old password",
-          });
-      }
-
-      const newPepper = peppers[Math.floor(Math.random() * peppers.length)];
-      const newHashedPwd = crypto
-        .createHash("sha512")
-        .update(salt + pwd + newPepper)
-        .digest("hex");
-
-      user.password = newHashedPwd;
+      isUpdated = true;
     }
 
     // Update profile picture if provided
     if (req.file) {
       user.profilePic = req.file.path;
+      isUpdated = true;
     }
 
-    await user.save();
-    res.status(200).json({ message: "User details updated successfully" });
+    // Save changes if either name or profile picture was provided
+    if (isUpdated) {
+      await user.save();
+      res.status(200).json({ message: "User details updated successfully" });
+    } else {
+      res.status(400).json({ message: "No update information provided" });
+    }
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       return res.status(403).json({ message: "Access token expired" });
@@ -172,6 +153,53 @@ const updateUserDetails = async (req, res) => {
   }
 };
 
+const sendPasswordResetEmail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(200).json({ message: "Password reset email sent." });
+  }
+
+  const passwordResetToken = crypto.randomBytes(32).toString("hex");
+  const hash = crypto.createHash("sha256").update(passwordResetToken).digest("hex");
+  user.passwordResetToken = hash;
+  user.passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+  await user.save();
+
+  const link = `http://localhost:3000/reset-password?token=${passwordResetToken}&id=${user._id}`;
+
+  try {
+    await sendEmail(user.email, "Password Reset", `Please click on the following link to reset your password: ${link}`);
+    res.status(200).json({ message: "Password reset email sent." });
+  } catch (error) {
+    res.status(500).json({ message: "Error sending email" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: "Token is invalid or has expired" });
+  }
+
+  // Hash the new password before saving
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  user.password = hashedPassword;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  res.status(200).json({ message: "Password has been reset successfully" });
+};
+
 module.exports = {
   isValidEmail,
   getAllUsers,
@@ -180,4 +208,6 @@ module.exports = {
   getMe,
   changeUserRole,
   updateUserDetails,
+  sendPasswordResetEmail,
+  resetPassword,
 };

@@ -31,7 +31,7 @@ const userSchema = new Schema({
   },
   profilePic: {
     type: String,
-    default: "https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg",
+    default: "",
   },
   loginInfo: [
     {
@@ -45,6 +45,13 @@ const userSchema = new Schema({
       },
     },
   ],
+  passwordResetToken: {
+    type: String,
+    default: "",
+  },
+  passwordResetExpires: {
+    type: Date,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

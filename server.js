@@ -19,7 +19,7 @@ connectDB();
 
 app.use(logger);
 app.use(cookieParser());
-app.use(helmet({ crossOriginEmbedderPolicy: false }));
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(mongoSanitize());
 
 // Handle options credentials check - before CORS!
@@ -34,15 +34,7 @@ app.use(express.json());
 
 app.use("/", express.static(path.join(__dirname, "/public")));
 // Static route for uploads
-app.use('/uploads', (req, res, next) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8081');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  // Pass to next layer of middleware
-  next();
-}, express.static(path.join(__dirname, '/uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 app.use("/", require("./routes/root"));
 app.use("/register", require("./routes/register"));
@@ -69,4 +61,3 @@ app.use(errorHandler);
 mongoose.connection.on("open", () => {
   app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
 });
-

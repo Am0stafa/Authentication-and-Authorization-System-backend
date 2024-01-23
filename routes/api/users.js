@@ -9,6 +9,9 @@ const upload = multer({ dest: 'uploads/' });
 
 router.route("/getMail/:email").get(usersController.isValidEmail);
 
+router.post('/forgot-password', usersController.sendPasswordResetEmail);
+router.post('/reset-password', usersController.resetPassword);
+
 router.use(verifyJWT);
 
 router.route("/me").get(usersController.getMe);
