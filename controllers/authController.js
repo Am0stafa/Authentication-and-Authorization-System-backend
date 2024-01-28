@@ -4,10 +4,14 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const useragent = require("express-useragent");
 const axios = require("axios");
-          
+const FailedLoginAttempt = require("../model/FailedLoginAttempt");
 
 // login
 const handleLogin = async (req, res) => {
+  // get the fingerprint for the current visitor
+  const userFingerprint = req.fingerprint;
+  console.log("Fingerprint:", userFingerprint.hash);
+
   const { email, pwd } = req.body;
   if (!email || !pwd)
     return res
@@ -29,6 +33,21 @@ const handleLogin = async (req, res) => {
   const foundUser = await User.findOne({ email }).exec();
   if (!foundUser) return res.sendStatus(401); //Unauthorized
 
+  // Check for failed login attempts
+  let failedLoginRecord = await FailedLoginAttempt.findOne({
+    userId: foundUser._id,
+  });
+  // this user is blocked
+  if (
+    failedLoginRecord &&
+    failedLoginRecord.lockUntil &&
+    failedLoginRecord.lockUntil > Date.now()
+  ) {
+    return res.status(429).json({
+      message: "Too many failed login attempts. Please try again later.",
+    });
+  }
+
   const foundPass = foundUser.password;
   const salt = process.env.SALT;
   const peppers = ["00", "01", "10", "11"];
@@ -42,7 +61,19 @@ const handleLogin = async (req, res) => {
     );
   });
 
-  if (!match) return res.sendStatus(401); //Unauthorized
+  if (!match) {
+    // Increment failed attempts
+    if (!failedLoginRecord) {
+      failedLoginRecord = new FailedLoginAttempt({ userId: foundUser._id });
+    }
+    failedLoginRecord.attempts += 1;
+    if (failedLoginRecord.attempts >= 5) {
+      failedLoginRecord.lockUntil = new Date(Date.now() + 10 * 60 * 1000); // Lock for 10 minutes
+      failedLoginRecord.attempts = 0; // Reset attempts
+    }
+    await failedLoginRecord.save();
+    return res.sendStatus(401); //Unauthorized
+  }
 
   const roles = Object.values(foundUser.roles).filter(Boolean);
 
@@ -54,7 +85,7 @@ const handleLogin = async (req, res) => {
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "1m" }
+    { expiresIn: "10m" }
   );
 
   const newRefreshToken = jwt.sign(
@@ -102,6 +133,11 @@ const handleLogin = async (req, res) => {
     maxAge: 60 * 60 * 24 * 60, // 60 days
   });
 
+  if (failedLoginRecord) {
+    failedLoginRecord.attempts = 0;
+    failedLoginRecord.lockUntil = null;
+    await failedLoginRecord.save();
+  }
   // Send authorization roles and access token to user
   res.json({ user: foundUser.email, roles, accessToken, name: foundUser.name });
 };

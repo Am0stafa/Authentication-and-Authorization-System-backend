@@ -11,6 +11,7 @@ const connectDB = require("./config/dbConnect");
 const mongoose = require("mongoose");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
+const fingerprint = require('express-fingerprint');
 const app = express();
 const PORT = process.env.PORT || 8081;
 
@@ -27,7 +28,7 @@ app.use(mongoSanitize());
 app.use(credentials);
 // Cross Origin Resource Sharing
 app.use(cors(corsOptions));
-
+app.use(fingerprint());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(express.json());
