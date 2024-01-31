@@ -190,6 +190,7 @@ const changeUserRole = async (req, res) => {
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
     const requesterEmail = decoded.UserInfo.email;
     const requester = await User.findOne({ email: requesterEmail }).exec();
+
     if (!requester || !requester.roles.includes("Admin")) {
       return res
         .status(403)
