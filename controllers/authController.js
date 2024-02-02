@@ -7,7 +7,7 @@ const axios = require("axios");
 const FailedLoginAttempt = require("../model/FailedLoginAttempt");
 const redis = require('../config/redisConnect');
 const sendEmail = require("../config/sendEmail");
-
+const {OAuth2Client} = require('google-auth-library');
 
 // login
 const handleLogin = async (req, res) => {
@@ -178,6 +178,15 @@ const getUserInfo = async (req) => {
   };
 };
 
+const getUserData = async (access_token) => {
+
+  const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+  
+  //console.log('response',response);
+  const data = await response.json();
+  console.log('data',data);
+}
+
 const send2fa = async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -192,7 +201,7 @@ const send2fa = async (req, res) => {
 
     // Generate a secure 6 digit code
     const code = crypto.randomInt(100000, 999999);
-    console.log("2FA code:", code); // For debugging purposes; consider removing in production
+    console.log("2FA code:", code); 
     const hash = crypto.createHash("sha256").update(code.toString()).digest("hex");
 
     user.emailVerificationToken = hash;
@@ -210,4 +219,51 @@ const send2fa = async (req, res) => {
   }
 };
 
-module.exports = { handleLogin, send2fa};
+// Generate a URL for the consent dialog
+const loginWithGoogle = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", 'http://localhost:3000');
+  res.header("Access-Control-Allow-Credentials", 'true');
+  res.header("Referrer-Policy","no-referrer-when-downgrade");
+  const redirectURL = 'http://127.0.0.1:3000/oauth';
+
+  const oAuth2Client = new OAuth2Client(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+      redirectURL
+    );
+
+    // Generate the url that will be used for the consent dialog.
+    const authorizeUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: 'https://www.googleapis.com/auth/userinfo.profile  openid ',
+      prompt: 'consent'
+    });
+
+    return res.status(200).json({ url: authorizeUrl });
+}
+
+const oauthGoogle = async (req, res) => {
+  const code = req.query.code;
+  const redirectURL = 'http://127.0.0.1:3000/oauth';
+  try{
+    const oAuth2Client = new OAuth2Client(
+      process.env.CLIENT_ID,
+      process.env.CLIENT_SECRET,
+      redirectURL
+    );
+    const r =  await oAuth2Client.getToken(code);
+    await oAuth2Client.setCredentials(r.tokens);
+    console.info('Tokens acquired.');
+    const user = oAuth2Client.credentials;
+    console.log('credentials',user);
+    await getUserData(oAuth2Client.credentials.access_token);
+    } catch (err) {
+      console.log('Error logging in with OAuth2 user', err);
+    }
+
+
+    return res.redirect(303, 'http://localhost:5173/');
+  
+}
+
+module.exports = {handleLogin, send2fa, loginWithGoogle};
