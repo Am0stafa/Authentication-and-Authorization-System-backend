@@ -6,6 +6,7 @@ const useragent = require("express-useragent");
 const axios = require("axios");
 const FailedLoginAttempt = require("../model/FailedLoginAttempt");
 const redis = require('../config/redisConnect');
+const sendEmail = require("../config/sendEmail");
 
 
 // login
@@ -14,11 +15,12 @@ const handleLogin = async (req, res) => {
   const userFingerprint = req.fingerprint;
   console.log("Fingerprint:", userFingerprint.hash);
 
-  const { email, pwd } = req.body;
-  if (!email || !pwd)
+  const { email, pwd, code } = req.body;
+  if (!email || !pwd || !code)
     return res
       .status(400)
-      .json({ message: "Email and password are required." });
+      .json({ message: "Email, password, and 2FA code are required." });
+
 
   if (email.length > 256) {
     return res
@@ -76,6 +78,13 @@ const handleLogin = async (req, res) => {
     await failedLoginRecord.save();
     return res.sendStatus(401); //Unauthorized
   }
+  // Check if 2FA code is valid
+  const is2FACodeValid = crypto.createHash("sha256").update(code).digest("hex") === foundUser.emailVerificationToken;
+  if (!is2FACodeValid) {
+    return res.status(401).json({ message: "Invalid 2FA code." });
+  }
+  foundUser.emailVerificationToken = null;
+  await foundUser.save();
 
   const roles = Object.values(foundUser.roles).filter(Boolean);
 
@@ -169,4 +178,36 @@ const getUserInfo = async (req) => {
   };
 };
 
-module.exports = { handleLogin };
+const send2fa = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    const user = await User.findOne({ email }).exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate a secure 6 digit code
+    const code = crypto.randomInt(100000, 999999);
+    console.log("2FA code:", code); // For debugging purposes; consider removing in production
+    const hash = crypto.createHash("sha256").update(code.toString()).digest("hex");
+
+    user.emailVerificationToken = hash;
+    await user.save();
+
+    // Send email with the 2FA code
+    const subject = "Your 2FA Code";
+    const text = `Your 2FA code is: ${code}`;
+    await sendEmail(email, subject, text);
+
+    res.status(200).json({ message: "2FA code sent to email" });
+  } catch (error) {
+    console.error("Error sending 2FA code:", error);
+    res.status(500).json({ message: "An error occurred while sending the 2FA code" });
+  }
+};
+
+module.exports = { handleLogin, send2fa};

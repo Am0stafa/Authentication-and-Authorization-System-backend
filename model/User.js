@@ -52,6 +52,10 @@ const userSchema = new Schema({
   passwordResetExpires: {
     type: Date,
   },
+  emailVerificationToken: {
+    type: String,
+    default: "",
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

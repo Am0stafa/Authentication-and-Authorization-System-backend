@@ -1,0 +1,10 @@
+20240202	18:47:17	fe4b0a78-bb0d-4e3c-9505-141032688622	GET	undefined	/auth/send2fa
+20240202	18:55:49	149da808-b5e5-4a6d-8a5e-c9b5fe0ea72d	GET	undefined	/auth/send2fa
+20240202	18:56:13	a5e605fb-5b2d-4560-b7ec-91813364b6c7	POST	undefined	/auth/send2fa
+20240202	18:56:21	2ff9707c-5fde-4bca-9efa-113bdfed76c9	POST	undefined	/auth/send2fa
+20240202	18:57:12	c9e21a49-28cd-415f-93e7-a4e4b615c71e	POST	undefined	/auth/send2fa
+20240202	19:20:43	3375daaf-e285-448a-adea-53a325fff90e	GET	http://localhost:3000	/refresh
+20240202	19:36:34	cc00ab6a-fbf0-4abc-a9d3-dfcd99cafc6a	OPTIONS	http://localhost:3000	/auth/send2fa
+20240202	19:36:34	1d6c91a5-2bcc-4022-9d66-7ce5c0e239a4	POST	http://localhost:3000	/auth/send2fa
+20240202	19:36:43	71de5884-75e9-4230-a95a-841c58a757ca	OPTIONS	http://localhost:3000	/auth
+20240202	19:36:43	f6aff066-991e-42d5-850e-f153c6b05010	POST	http://localhost:3000	/auth
