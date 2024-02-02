@@ -1,4 +1,5 @@
 const User = require("../model/User");
+const redis = require('../config/redisConnect');
 
 const handleLogout = async (req, res) => {
   //! On client also delete the accessToken in the memory in the client application
@@ -12,6 +13,7 @@ const handleLogout = async (req, res) => {
   if (!foundUser) {
     //* we didnt find a user but we have a cookie so just delete it
     res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
+    await redis.del(`refreshToken:${foundUser._id}`);
     return res.sendStatus(204);
   }
 

@@ -60,6 +60,7 @@ const handleRefreshToken = async (req, res) => {
         sameSite: "None",
         maxAge: 60 * 60 * 24 * 60, // 60 days
       });
+      await redis.set(`refreshToken:${foundUser._id}`, newRefreshToken, 'EX', 60 * 60 * 24 * 60); // Set to expire in 60 days
 
       res.json({
         user: decoded.email,

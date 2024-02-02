@@ -8,6 +8,7 @@ const errorHandler = require("./middleware/errorHandler");
 const cookieParser = require("cookie-parser");
 const credentials = require("./middleware/credentials");
 const connectDB = require("./config/dbConnect");
+const redis = require("./config/redisConnect");
 const mongoose = require("mongoose");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
@@ -15,8 +16,12 @@ const fingerprint = require('express-fingerprint');
 const app = express();
 const PORT = process.env.PORT || 8081;
 
-//! connect to db
-connectDB();
+
+redis.on('connect', () => {
+  console.log('Redis connected... connecting to mongo');
+  connectDB();
+});
+
 
 app.use(logger);
 app.use(cookieParser());

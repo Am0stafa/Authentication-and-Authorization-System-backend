@@ -5,6 +5,8 @@ const validator = require("validator");
 const useragent = require("express-useragent");
 const axios = require("axios");
 const FailedLoginAttempt = require("../model/FailedLoginAttempt");
+const redis = require('../config/redisConnect');
+
 
 // login
 const handleLogin = async (req, res) => {
@@ -132,7 +134,8 @@ const handleLogin = async (req, res) => {
     sameSite: "None",
     maxAge: 60 * 60 * 24 * 60, // 60 days
   });
-
+  await redis.set(`refreshToken:${foundUser._id}`, newRefreshToken, 'EX', 60 * 60 * 24 * 60);
+  
   if (failedLoginRecord) {
     failedLoginRecord.attempts = 0;
     failedLoginRecord.lockUntil = null;

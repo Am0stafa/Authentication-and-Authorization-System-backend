@@ -24,6 +24,7 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-useragent": "^1.0.15",
     "helmet": "^6.0.0",
+    "ioredis": "^5.3.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.5.1",
     "multer": "^1.4.5-lts.1",
