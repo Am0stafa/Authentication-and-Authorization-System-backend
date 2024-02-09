@@ -224,7 +224,7 @@ const loginWithGoogle = async (req, res) => {
   res.header("Access-Control-Allow-Origin", 'http://localhost:3000');
   res.header("Access-Control-Allow-Credentials", 'true');
   res.header("Referrer-Policy","no-referrer-when-downgrade");
-  const redirectURL = 'http://127.0.0.1:3000/oauth';
+  const redirectURL = 'http://127.0.0.1:8081/auth/oauth';
 
   const oAuth2Client = new OAuth2Client(
     process.env.CLIENT_ID,
@@ -242,9 +242,10 @@ const loginWithGoogle = async (req, res) => {
     return res.status(200).json({ url: authorizeUrl });
 }
 
+// route to handle the callback after Google has authenticated the user and get user information
 const oauthGoogle = async (req, res) => {
   const code = req.query.code;
-  const redirectURL = 'http://127.0.0.1:3000/oauth';
+  const redirectURL = 'http://127.0.0.1:8081/auth/oauth';
   try{
     const oAuth2Client = new OAuth2Client(
       process.env.CLIENT_ID,
@@ -262,8 +263,8 @@ const oauthGoogle = async (req, res) => {
     }
 
 
-    return res.redirect(303, 'http://localhost:5173/');
+    return res.redirect(303, 'http://localhost:3000/');
   
 }
 
-module.exports = {handleLogin, send2fa, loginWithGoogle};
+module.exports = {handleLogin, send2fa, loginWithGoogle, oauthGoogle};

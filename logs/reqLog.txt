@@ -8,3 +8,6 @@
 20240202	19:36:34	1d6c91a5-2bcc-4022-9d66-7ce5c0e239a4	POST	http://localhost:3000	/auth/send2fa
 20240202	19:36:43	71de5884-75e9-4230-a95a-841c58a757ca	OPTIONS	http://localhost:3000	/auth
 20240202	19:36:43	f6aff066-991e-42d5-850e-f153c6b05010	POST	http://localhost:3000	/auth
+20240209	16:28:10	c9a5516a-a562-45f0-89ad-bb160131df47	GET	http://localhost:3000	/refresh
+20240209	16:28:25	6513569f-7af7-4f85-840a-8810ba07e418	POST	http://localhost:3000	/auth/request
+20240209	16:32:05	364d2d57-7dc8-43e6-ab40-5f50ade632d6	POST	http://localhost:3000	/auth/request
