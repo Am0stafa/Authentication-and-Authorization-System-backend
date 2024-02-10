@@ -8,6 +8,7 @@ router.post('/send2fa', authController.send2fa);
 
 router.post('/request', authController.loginWithGoogle);
 router.post('/oauth', authController.oauthGoogle);
+router.get('/generate-qr-code', authController.generateQRCode);
 
 
 module.exports = router;

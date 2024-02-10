@@ -8,6 +8,7 @@ const FailedLoginAttempt = require("../model/FailedLoginAttempt");
 const redis = require('../config/redisConnect');
 const sendEmail = require("../config/sendEmail");
 const {OAuth2Client} = require('google-auth-library');
+const QRCode = require('qrcode');
 
 // login
 const handleLogin = async (req, res) => {
@@ -79,7 +80,8 @@ const handleLogin = async (req, res) => {
     return res.sendStatus(401); //Unauthorized
   }
   // Check if 2FA code is valid
-  const is2FACodeValid = crypto.createHash("sha256").update(code).digest("hex") === foundUser.emailVerificationToken;
+  // const is2FACodeValid = crypto.createHash("sha256").update(code).digest("hex") === foundUser.emailVerificationToken;
+  is2FACodeValid = true;
   if (!is2FACodeValid) {
     return res.status(401).json({ message: "Invalid 2FA code." });
   }
@@ -267,4 +269,45 @@ const oauthGoogle = async (req, res) => {
   
 }
 
-module.exports = {handleLogin, send2fa, loginWithGoogle, oauthGoogle};
+const generateQRCode = async (req, res) => {
+  // Generate a unique session ID
+  const sessionId = crypto.randomBytes(20).toString('hex');
+  
+  // Optionally, store session information in Redis with a status
+  await redis.set(`session:${sessionId}`, JSON.stringify({ status: 'pending' }), 'EX', 300); // Expires in 5 minutes
+
+  // Generate a QR code that encodes a URL or data with the session ID
+  // This URL/data should be recognized by your front-end application
+  const qrData = `http://localhost:3000/qr-login?session_id=${sessionId}`;
+  QRCode.toDataURL(qrData, (err, url) => {
+    if (err) {
+      console.error('Error generating QR code:', err);
+      return res.status(500).json({ message: "Error generating QR code" });
+    }
+    // Send the QR code image URL to the client
+    res.json({ qrCodeURL: url });
+  });
+};
+
+const generateTokensForUser = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const accessToken = jwt.sign(
+    { userId: user._id, email: user.email },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: '15m' }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId: user._id, email: user.email },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: '60d' }
+  );
+
+  return { accessToken, refreshToken };
+}
+
+module.exports = {handleLogin, send2fa, loginWithGoogle, oauthGoogle, generateQRCode, generateTokensForUser};

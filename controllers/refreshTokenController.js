@@ -1,6 +1,6 @@
 const User = require("../model/User");
 const jwt = require("jsonwebtoken");
-
+const redis = require('../config/redisConnect');
 // to generate a new refresh token
 const handleRefreshToken = async (req, res) => {
   const cookies = req.cookies;
