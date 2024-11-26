@@ -27,36 +27,35 @@ interface HandlerOptions {
  * instead of crashing the app
  * @param handler Request handler to check for error
  */
-export const relogRequestHandler = (
-  handler: RequestHandler,
-  options?: HandlerOptions,
-): RequestHandler => async (req: Request, res: Response, next: NextFunction) => {
+export const requestHandler = (handler: RequestHandler,options?: HandlerOptions): RequestHandler => async (req: Request, res: Response, next: NextFunction) => {
   logger.log({
     level: 'info',
     message: req.url
   });
-  if (!options?.skipJwtAuth) {
-    const token = req.headers['authorization'];
 
-    if (token) {
-      // eslint-disable-next-line consistent-return
-      jwt.verify(token.replace('Bearer ', '').replace('Bearer', ''), process.env.SECRET, (err, decoded) => {
-        if (err) {
-          logger.log({
-            level: 'info',
-            message: 'Token Validation Failed'
-          });
-          return next(new UnauthorizedRequest());
-        }
-      });
-    } else {
-      logger.log({
-        level: 'info',
-        message: 'Auth token is not supplied'
-      });
-      return next(new UnauthorizedRequest('Auth token is not supplied'));
-    }
-  }
+  // if (!options?.skipJwtAuth) {
+  //   const token = req.headers['authorization'];
+
+  //   if (token) {
+  //     // eslint-disable-next-line consistent-return
+  //     jwt.verify(token.replace('Bearer ', '').replace('Bearer', ''), process.env.SECRET, (err, decoded) => {
+  //       if (err) {
+  //         logger.log({
+  //           level: 'info',
+  //           message: 'Token Validation Failed'
+  //         });
+  //         return next(new UnauthorizedRequest());
+  //       }
+  //     });
+  //   } else {
+  //     logger.log({
+  //       level: 'info',
+  //       message: 'Auth token is not supplied'
+  //     });
+  //     return next(new UnauthorizedRequest('Auth token is not supplied'));
+  //   }
+  // }
+
   if (options?.validation?.body) {
     const { error } = options?.validation?.body.validate(req.body);
     if (error != null) {

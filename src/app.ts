@@ -1,4 +1,3 @@
-import bodyParser from 'body-parser';
 import compression from 'compression';
 import path from 'path';
 import express, { Request, Response, NextFunction } from 'express';
@@ -8,8 +7,8 @@ import { router } from './routes';
 export const app = express();
 
 app.use(compression());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.set('port', process.env.PORT || 3000);
 

@@ -1,14 +1,12 @@
-/* eslint-disable import/first */
 import dotenv from 'dotenv';
+import { app } from './app';
+import MongoConnection from './mongo-connection';
+import { logger } from './logger';
 
 const result = dotenv.config();
 if (result.error) {
   dotenv.config({ path: '.env' });
 }
-
-import { app } from './app';
-import MongoConnection from './mongo-connection';
-import { logger } from './logger';
 
 const mongoConnection = new MongoConnection(process.env.MONGO_URL);
 

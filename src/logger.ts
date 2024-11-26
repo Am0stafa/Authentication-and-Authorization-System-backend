@@ -35,6 +35,7 @@ const logTransports = [
 
 export const logger = createLogger({
   format: format.combine(
+    format.colorize(),
     format.timestamp()
   ),
   transports: logTransports,

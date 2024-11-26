@@ -1,7 +1,6 @@
 import { RequestHandler } from 'express';
 import Joi from '@hapi/joi';
-import { relogRequestHandler } from '../../middleware/request-middleware';
-import { User } from '../../models/User';
+import { requestHandler } from '../../middleware/request-middleware';
 
 export const addUserSchema = Joi.object().keys({
   email: Joi.string().required(),
@@ -11,18 +10,9 @@ export const addUserSchema = Joi.object().keys({
 });
 
 const registerWrapper: RequestHandler = async (req, res) => {
-  const {
-    email, password, firstName, lastName
-  } = req.body;
-
-  const user = new User({
-    email, firstName, lastName, createdOn: Date.now()
+  return res.status(200).json({
+    message: 'Hi its register'
   });
-  user.password = user.encryptPassword(password);
-
-  await user.save();
-
-  res.status(201).json(user.toJSON());
 };
 
-export const register = relogRequestHandler(registerWrapper, { validation: { body: addUserSchema }, skipJwtAuth: true });
+export const register = requestHandler(registerWrapper, { validation: { body: addUserSchema }, skipJwtAuth: true });
