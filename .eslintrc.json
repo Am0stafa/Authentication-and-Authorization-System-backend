@@ -1,3 +1,49 @@
 {
-  
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/typescript"
+  ],
+  "plugins": [
+    "@typescript-eslint",
+    "import"
+  ],
+  "rules": {
+    "@typescript-eslint/semi": "off",
+    "@typescript-eslint/member-delimiter-style": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/indent": "off",
+    "@typescript-eslint/quotes": "off",
+    "@typescript-eslint/space-before-function-paren": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "semi": "off",
+    "quotes": "off",
+    "indent": "off",
+    "comma-dangle": "off",
+    "arrow-body-style": "off",
+    "arrow-parens": "off",
+    "object-curly-spacing": "off",
+    "space-before-blocks": "off",
+    "space-before-function-paren": "off",
+    "space-in-parens": "off",
+    "space-infix-ops": "off",
+    "space-unary-ops": "off",
+    "spaced-comment": "off",
+    "no-trailing-spaces": "off",
+    "no-multiple-empty-lines": "off",
+    "linebreak-style": "off",
+    "eol-last": "off",
+    "key-spacing": "off",
+    "brace-style": "off"
+  },
+  "settings": {
+    "import/resolver": {
+      "typescript": {}
+    }
+  }
 }
