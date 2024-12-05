@@ -23,46 +23,57 @@ const userSchema = new Schema<IUser>({
     required: true,
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
+    maxlength: 255
   },
   firstName: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    maxlength: 255
   },
   lastName: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    maxlength: 255
   },
   password: {
     type: String,
     required: true,
-    minlength: 6
+    minlength: 6,
+    maxlength: 1024,
+    select: false
   },
   lastLogin: {
     type: Date,
-    default: null
+    default: null,
+    select: false
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: false,
+    select: false
   },
   verificationToken: {
     type: String,
-    default: null
+    default: null,
+    select: false
   },
   verificationTokenExpires: {
     type: Date,
-    default: null
+    default: null,
+    select: false
   },
   resetPasswordToken: {
     type: String,
-    default: null
+    default: null,
+    select: false
   },
   resetPasswordExpires: {
     type: Date,
-    default: null
+    default: null,
+    select: false
   }
 }, {
   timestamps: true

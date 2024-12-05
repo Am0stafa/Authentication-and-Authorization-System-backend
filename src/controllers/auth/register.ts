@@ -4,6 +4,7 @@ import { User } from '../../models/User';
 import { requestHandler } from '../../middleware/request-middleware';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import { generateJWTandSetCookie } from '../../utils/generateJWTandSetCookie';
 
 export const addUserSchema = Joi.object().keys({
   email: Joi.string().email().required(),
@@ -15,13 +16,12 @@ export const addUserSchema = Joi.object().keys({
 const registerWrapper: RequestHandler = async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
 
-
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res.status(400).json({
       success: false,
-      message: 'Email already registered'
+      message: 'Email already registered, Go to login page!'
     });
   }
 
@@ -44,17 +44,20 @@ const registerWrapper: RequestHandler = async (req, res) => {
     isVerified: false
   });
 
+  // Save user and immediately retrieve without password
   await user.save();
 
-  // Remove password from response
-  const userResponse = user.toObject();
-  delete userResponse.password;
+  // Authenticate user by generating JWT and setting cookie
+  generateJWTandSetCookie(res, { userId: user._id.toString() });
+
+  // Retrieve user without password or other sensitive fields
+  const userResponse = await User.findById(user._id).lean();
 
   return res.status(201).json({
     success: true,
     message: 'User registered successfully',
     data: userResponse,
-    verificationLink // In a real-world scenario, this would be sent via email
+    verificationLink
   });
 };
 
