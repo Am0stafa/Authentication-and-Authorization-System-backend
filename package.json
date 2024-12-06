@@ -34,6 +34,7 @@
     "mailtrap": "^3.4.0",
     "moment": "^2.27.0",
     "mongoose": "^5.9.21",
+    "n-digit-token": "^2.2.2",
     "nodemon": "^2.0.4",
     "swagger-ui-express": "^4.1.4",
     "winston": "^3.3.3"

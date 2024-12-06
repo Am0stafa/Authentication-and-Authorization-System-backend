@@ -103,7 +103,11 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
 
 // Create indexes
 userSchema.index({ email: 1 });
-userSchema.index({ verificationToken: 1 });
+userSchema.index({ 
+  email: 1, 
+  isVerified: 1, 
+  verificationTokenExpires: 1 
+});
 userSchema.index({ resetPasswordToken: 1 });
 
 export const User = mongoose.model<IUser>('User', userSchema);
