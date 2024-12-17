@@ -15,6 +15,17 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  refreshTokens: Array<{
+    token: string;
+    family: string;
+    version: number;
+    expiresAt: Date;
+    issuedAt: Date;
+    lastUsed: Date;
+    issuedBy: string;
+    device: string;
+    isRevoked: boolean;
+  }>;
 }
 
 const userSchema = new Schema<IUser>({
@@ -74,7 +85,46 @@ const userSchema = new Schema<IUser>({
     type: Date,
     default: null,
     select: false
-  }
+  },
+  refreshTokens: [{
+    token: {
+      type: String,
+      required: true,
+      select: false
+    },
+    family: {
+      type: String,
+      required: true
+    },
+    version: {
+      type: Number,
+      required: true
+    },
+    expiresAt: {
+      type: Date,
+      required: true
+    },
+    issuedAt: {
+      type: Date,
+      required: true
+    },
+    lastUsed: {
+      type: Date,
+      required: true
+    },
+    issuedBy: {
+      type: String,
+      required: true
+    },
+    device: {
+      type: String,
+      required: true
+    },
+    isRevoked: {
+      type: Boolean,
+      default: false
+    }
+  }]
 }, {
   timestamps: true
 });

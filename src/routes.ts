@@ -14,6 +14,7 @@ router.post('/auth/logout', AuthController.logout);
 router.post('/auth/forgot-password', AuthController.forgotPassword);
 router.post('/auth/reset-password', AuthController.resetPassword);
 router.post('/auth/verify-token', AuthController.verifyToken);
+router.post('/auth/refresh-token', AuthController.refreshToken);
 
 if (process.env.NODE_ENV === 'development') {
   router.use('/dev/api-docs', swaggerUi.serve);

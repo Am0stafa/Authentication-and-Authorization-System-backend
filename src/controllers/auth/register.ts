@@ -3,10 +3,13 @@ import Joi from '@hapi/joi';
 import { User } from '../../models/User';
 import { requestHandler } from '../../middleware/request-middleware';
 import bcrypt from 'bcrypt';
-import { generateJWTandSetCookie } from '../../utils/generateJWTandSetCookie';
+import crypto from 'crypto';
 import { gen } from 'n-digit-token';
 import { sendVerificationEmail } from '../../utils/emailService';
 import { EmailError } from '../../errors';
+import { getClientInfo } from '../../utils/clientInfo';
+import { generateAccessToken } from '../../utils/accessToken';
+import { generateRefreshToken } from '../../utils/refreshToken';
 
 export const addUserSchema = Joi.object().keys({
   email: Joi.string().email().required(),
@@ -28,41 +31,62 @@ const registerWrapper: RequestHandler = async (req, res) => {
       });
     }
 
-  // Generate secure 6-digit verification token
-  const verificationToken = gen(6);
-  const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
-  const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Generate secure 6-digit verification token
+    const verificationToken = gen(6);
+    const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-  if (email === "ramy.mostfaa@gmail.com") {
-    await sendVerificationEmail(email, verificationToken);
-  }
+    if (email === "ramy.mostfaa@gmail.com") {
+      await sendVerificationEmail(email, verificationToken);
+    }
   
-  // Create new user
-  const user = new User({
-    email,
-    password,
-    firstName,
-    lastName,
-    verificationToken: hashedVerificationToken,
-    verificationTokenExpires,
-    isVerified: false,
-    lastLogin: new Date(),
-  });
+    // Create new user
+    const user = new User({
+      email,
+      password,
+      firstName,
+      lastName,
+      verificationToken: hashedVerificationToken,
+      verificationTokenExpires,
+      isVerified: false,
+      lastLogin: new Date(),
+    });
 
-    // Save user and immediately retrieve without password
+    // Save user
     await user.save();
 
-    // Authenticate user by generating JWT and setting cookie
-    generateJWTandSetCookie(res, { userId: user._id.toString() });
+    // Generate tokens
+    const clientInfo = getClientInfo(req);
+    const accessToken = generateAccessToken(user._id.toString());
+    const { token: refreshToken, expiresAt } = await generateRefreshToken(
+      user._id.toString(),
+      {
+        userAgent: JSON.stringify(clientInfo.userAgent),
+        ipAddress: clientInfo.ipAddress,
+        family: crypto.randomBytes(32).toString('hex'),
+        version: 1
+      }
+    );
 
-    // Retrieve user without password or other sensitive fields
+    // Set refresh token cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      expires: expiresAt,
+      path: '/'
+    });
+
+    // Retrieve user without password
     const userResponse = await User.findById(user._id).lean();
 
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      data: userResponse,
-      verificationToken
+      data: {
+        ...userResponse,
+        accessToken,
+        verificationToken
+      }
     });
   } catch (error) {
     if (error instanceof EmailError) {

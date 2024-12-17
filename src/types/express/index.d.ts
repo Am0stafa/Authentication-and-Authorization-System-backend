@@ -1,3 +1,5 @@
+import { Details } from 'express-useragent';
+
 declare global {
   namespace Express {
     interface Request {
@@ -6,7 +8,9 @@ declare global {
         email: string;
         firstName: string;
         lastName: string;
-      }
+      };
+      useragent?: Details;
+      clientIp?: string;
     }
   }
 }

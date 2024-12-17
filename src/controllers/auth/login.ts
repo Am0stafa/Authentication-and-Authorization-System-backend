@@ -1,9 +1,12 @@
 import { RequestHandler } from 'express';
 import Joi from '@hapi/joi';
+import crypto from 'crypto';
 import { User } from '../../models/User';
 import { requestHandler } from '../../middleware/request-middleware';
 import { BadRequest } from '../../errors';
-import { generateJWTandSetCookie } from '../../utils/generateJWTandSetCookie';
+import { generateAccessToken } from '../../utils/accessToken';
+import { generateRefreshToken } from '../../utils/refreshToken';
+import { getClientInfo } from '../../utils/clientInfo';
 
 export const loginSchema = Joi.object().keys({
   email: Joi.string().email().required(),
@@ -39,8 +42,28 @@ const loginWrapper: RequestHandler = async (req, res) => {
     lastLogin: new Date()
   });
 
-  // Generate JWT and set cookie
-  generateJWTandSetCookie(res, { userId: user._id.toString() });
+  const clientInfo = getClientInfo(req);
+
+  // Generate access token
+  const accessToken = generateAccessToken(user._id.toString());
+  // Generate refresh token 
+  const { token: refreshToken, expiresAt } = await generateRefreshToken(
+    user._id.toString(),
+    {
+      userAgent: JSON.stringify(clientInfo.userAgent),
+      ipAddress: clientInfo.ipAddress,
+      family: crypto.randomBytes(32).toString('hex'),
+      version: 1
+    }
+  );
+
+  // Set cookies
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    expires: expiresAt,
+    path: '/'
+  });
 
   // Get user data without sensitive fields
   const userResponse = await User.findById(user._id).lean();
@@ -48,7 +71,10 @@ const loginWrapper: RequestHandler = async (req, res) => {
   return res.status(200).json({
     success: true,
     message: 'Login successful',
-    data: userResponse
+    data: {
+      ...userResponse,
+      accessToken
+    }
   });
 };
 

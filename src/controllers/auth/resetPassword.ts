@@ -27,16 +27,22 @@ const resetPasswordWrapper: RequestHandler = async (req, res) => {
     _id: decoded.userId,
     resetPasswordToken: { $exists: true },
     resetPasswordExpires: { $gt: new Date() }
-  }).select('+resetPasswordToken');
+  }).select('+resetPasswordToken +password');
 
   if (!user) {
     throw new BadRequest('Invalid or expired reset token');
   }
 
-  // Verify token
+  // Verify token hasn't been used
   const isValidToken = await bcrypt.compare(token, user.resetPasswordToken);
   if (!isValidToken) {
     throw new BadRequest('Invalid reset token');
+  }
+
+  // Ensure new password is different
+  const isSamePassword = await bcrypt.compare(password, user.password);
+  if (isSamePassword) {
+    throw new BadRequest('New password must be different from current password');
   }
 
   // Update password and clear reset token

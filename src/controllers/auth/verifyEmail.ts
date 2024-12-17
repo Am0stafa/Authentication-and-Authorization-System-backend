@@ -21,13 +21,6 @@ const verifyEmailWrapper: RequestHandler = async (req, res) => {
     verificationTokenExpires: { $gt: new Date() }
   }).select('+verificationToken +isVerified +verificationTokenExpires');
 
-  if (user.verificationToken === '1') {
-    return res.status(400).json({
-      success: false,
-      message: 'Try again later'
-    });
-  }
-
   if (!user) {
     throw new BadRequest('Invalid or expired verification token');
   }

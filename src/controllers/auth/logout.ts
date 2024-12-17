@@ -1,14 +1,21 @@
 import { RequestHandler } from 'express';
 import { requestHandler } from '../../middleware/request-middleware';
+import { revokeRefreshToken } from '../../utils/refreshToken';
 
 const logoutWrapper: RequestHandler = async (req, res) => {
-  // Clear the JWT cookie
-  res.cookie('token', '', {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (refreshToken) {
+    // Revoke the refresh token if it exists
+    await revokeRefreshToken(req.user.userId, refreshToken);
+  }
+
+  // Clear both access and refresh token cookies
+  res.cookie('refreshToken', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    expires: new Date(0), // Set expiration to past date to ensure deletion
-    path: '/',
+    expires: new Date(0),
+    path: '/'
   });
 
   return res.status(200).json({
@@ -18,5 +25,5 @@ const logoutWrapper: RequestHandler = async (req, res) => {
 };
 
 export const logout = requestHandler(logoutWrapper, {
-  skipJwtAuth: false // Require authentication to logout
+  skipJwtAuth: false
 }); 
